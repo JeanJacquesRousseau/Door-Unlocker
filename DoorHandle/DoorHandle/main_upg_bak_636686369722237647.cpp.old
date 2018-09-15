@@ -1,0 +1,18 @@
+/*
+ * DoorHandle.cpp
+ *
+ * Created: 2018-07-31 12:29:23 PM
+ * Author : David
+ */ 
+
+#include <avr/io.h>
+
+
+int main(void)
+{
+    /* Replace with your application code */
+    while (1) 
+    {
+    }
+}
+
