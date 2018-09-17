@@ -18,6 +18,7 @@
 *.hex
 *.map
 *.srec
+test.txt
 
 #Build Results
 *.o
