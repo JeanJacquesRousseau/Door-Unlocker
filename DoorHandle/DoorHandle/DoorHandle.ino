@@ -97,16 +97,16 @@ void connectWiFi(){
 }
 
 void handleLogin() {                         // If a POST request is made to URI /login
-	if( ! server.hasArg("username") || ! server.hasArg("password")
-	|| server.arg("username") == NULL || server.arg("password") == NULL) { // If the POST request doesn't have username and password data
+	if( ! server.hasArg("username") || ! server.hasArg("password") || server.arg("username") == NULL || server.arg("password") == NULL) { // If the POST request doesn't have username and password data
 		server.send(400, "text/plain", "400: Invalid Request");         // The request is invalid, so send HTTP status 400
 		return;
 	}
 	if(server.arg("username") == "Jo" && server.arg("password") == "Ma") { // If both the username and the password are correct
+		
 		if (!handleFileRead("/edit.htm")) {
 			server.send(404, "text/plain", "FileNotFound");
 		}
-		} else {                                                                              // Username and password don't match
+	} else {                                                                              // Username and password don't match
 		server.send(401, "text/plain", "401: Unauthorized");
 	}
 }
@@ -171,6 +171,15 @@ void beginServer(){
   	   
   //server.on("/OFF", handleOFF);
   //server.on("/Tetris.htm",handleTetris);
+  
+     server.on("/edit", HTTP_PUT, handleFileCreate);
+     //delete file
+     server.on("/edit", HTTP_DELETE, handleFileDelete);
+     //first callback is called after the request has ended with all parsed arguments
+     //second callback handles file uploads at that location
+     server.on("/edit", HTTP_POST, []() {
+	     server.send(200, "text/plain", "");
+     }, handleFileUpload);
    	
 	
 	   server.on("/", HTTP_GET, []() {
@@ -214,14 +223,7 @@ void beginServer(){
 	//   }
    //});
    //create file
-   server.on("/edit", HTTP_PUT, handleFileCreate);
-   //delete file
-   server.on("/edit", HTTP_DELETE, handleFileDelete);
-   //first callback is called after the request has ended with all parsed arguments
-   //second callback handles file uploads at that location
-   server.on("/edit", HTTP_POST, []() {
-	   server.send(200, "text/plain", "");
-   }, handleFileUpload);
+
 
    //called when the url is not defined here
    //use it to load content from SPIFFS
