@@ -1,3 +1,4 @@
+test.txt
 # Created by https://www.gitignore.io/api/atmelstudio
 
 ### AtmelStudio ###
@@ -18,7 +19,7 @@
 *.hex
 *.map
 *.srec
-test.txt
+
 
 #Build Results
 *.o
