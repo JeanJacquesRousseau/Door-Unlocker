@@ -1,4 +1,3 @@
-*.txt
 # Created by https://www.gitignore.io/api/atmelstudio
 
 ### AtmelStudio ###
@@ -9,6 +8,7 @@
 # so most of the project and solution files are the same as VS files,
 # only prefixed by an `at`.
 
+*.txt
 #Build Directories
 [Dd]ebug/
 [Rr]elease/
