@@ -37,13 +37,16 @@ void handleON();
 
 
 void setup() {
-  pinMode(LED_BUILTIN,OUTPUT);
-  pinMode(DOOR_PIN,OUTPUT);
-  digitalWrite(DOOR_PIN, HIGH);
-  delay(2000);
-  digitalWrite(DOOR_PIN,LOW);
-  Serial.begin(115200);
-  SPIFFS.begin();
+	//Pinning Setup
+	pinMode(LED_BUILTIN,OUTPUT);
+	pinMode(DOOR_PIN,OUTPUT);
+	digitalWrite(DOOR_PIN, HIGH);
+	delay(2000);
+	digitalWrite(DOOR_PIN,LOW);
+	
+	//Serial and SPI FlashFile System Setup
+	Serial.begin(115200);
+	SPIFFS.begin();
     {
 	    Dir dir = SPIFFS.openDir("/");
 	    while (dir.next()) {
@@ -54,12 +57,9 @@ void setup() {
 	    Serial.printf("\n");
     }
   
-  
-  connectWiFi();
-  digitalWrite(DOOR_PIN, HIGH);
-  delay(2000);
-  digitalWrite(DOOR_PIN,LOW);
-  beginServer();
+	//Wifi and Server begin 
+	connectWiFi();
+	beginServer();
   
 }
 
@@ -67,27 +67,27 @@ void setup() {
 
 void loop() {
 
-
-  server.handleClient();  
-  httpServer.handleClient();
+  server.handleClient();	  
+  httpServer.handleClient();	//HTTP firmware flash updater
 
 }
 
 void connectWiFi(){
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
+	WiFi.mode(WIFI_AP_STA);	//Acces Point and Station Mode
+	WiFi.begin(ssid, password);	//WiFi hardware connects to ssid,password
 	
-  httpUpdater.setup(&httpServer);
-  httpServer.begin();
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(500);
+		Serial.print(".");
+	}
+	
+	httpUpdater.setup(&httpServer);	//Linking of the server to setup path correctly
+	httpServer.begin();	//The server begins!
+	
+	Serial.println("");
+	Serial.println("WiFi connected");
+	Serial.println("IP address: ");
+	Serial.println(WiFi.localIP());	//Output local IP that we are connected to.
   
 }
 
@@ -115,45 +115,15 @@ void beginServer(){
     server.on("/edit", HTTP_DELETE, handleFileDelete);
     //first callback is called after the request has ended with all parsed arguments
     //second callback handles file uploads at that location
-    server.on("/edit", HTTP_POST, []() {
-		server.send(200, "text/plain", "");
-     }, handleFileUpload);
+	server.on("/edit", HTTP_POST, []() { server.send(200, "text/plain", ""); }, handleFileUpload);
    	
-	
-	server.on("/", HTTP_GET, []() {
-		if (!handleFileRead("/index.htm")) {
-			server.send(404, "text/plain", "FileNotFound");
-	    }
-	   });
-  
-  
-  
-	server.on("/Controleur", HTTP_GET, []() {
-		if (!handleFileRead("/Controleur.htm")) {
-			server.send(404, "text/plain", "FileNotFound");
-			}
-		});
-	   
-	server.on("/SourceDC", HTTP_GET, []() {
-		if (!handleFileRead("/SourceDC.htm")) {
-			server.send(404, "text/plain", "FileNotFound");
-		    }
-		});
-		   
-	server.on("/ServeurHTTP", HTTP_GET, []() {
-		if (!handleFileRead("/ServeurHTTP.htm")) {
-			server.send(404, "text/plain", "FileNotFound");
-			}
-		});
-  
-  
-	server.on("/Tetris", HTTP_GET, []() {
-		if (!handleFileRead("/Tetris.htm")) {
-			server.send(404, "text/plain", "FileNotFound");
-			}
-		});
-  
-   server.on("/list", HTTP_GET, handleFileList);
+	//HTTP_GET Paths 
+	server.on("/", HTTP_GET, []() {	if(!handleFileRead("/index.htm")) server.send(404, "text/plain", "FileNotFound"); });
+	server.on("/Controleur", HTTP_GET, []() { if(!handleFileRead("/Controleur.htm")) server.send(404, "text/plain", "FileNotFound"); });
+	server.on("/SourceDC", HTTP_GET, []() { if(!handleFileRead("/SourceDC.htm")) server.send(404, "text/plain", "FileNotFound"); });
+	server.on("/ServeurHTTP", HTTP_GET, []() { if(!handleFileRead("/ServeurHTTP.htm")) server.send(404, "text/plain", "FileNotFound"); });  
+	server.on("/Tetris", HTTP_GET, []() { if(!handleFileRead("/Tetris.htm")) server.send(404, "text/plain", "FileNotFound"); });
+	server.on("/list", HTTP_GET, handleFileList);
    //load editor
    //server.on("/edit", HTTP_GET, []() {
 	//   if (!handleFileRead("/edit.htm")) {
@@ -165,21 +135,17 @@ void beginServer(){
 
    //called when the url is not defined here
    //use it to load content from SPIFFS
-   server.onNotFound([]() {
-	   if (!handleFileRead(server.uri())) {
-		   server.send(404, "text/plain", "FileNotFound");
-	   }
-   });
+   server.onNotFound([]() { if(!handleFileRead(server.uri())) server.send(404, "text/plain", "FileNotFound"); });
 
-   //get heap status, analog input value and all GPIO statuses in one json call
-   server.on("/all", HTTP_GET, []() {
-	   String json = "{";
-		   json += "\"heap\":" + String(ESP.getFreeHeap());
-		   json += ", \"analog\":" + String(analogRead(A0));
-		   json += ", \"gpio\":" + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16)));
-	   json += "}";
-	   server.send(200, "text/json", json);
-	   json = String();
+	//get heap status, analog input value and all GPIO statuses in one json call
+	server.on("/all", HTTP_GET, []() {
+		String json = "{";
+		json += "\"heap\":" + String(ESP.getFreeHeap());
+		json += ", \"analog\":" + String(analogRead(A0));
+		json += ", \"gpio\":" + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16)));
+		json += "}";
+		server.send(200, "text/json", json);
+		json = String();
    });
 
   server.begin();
@@ -189,18 +155,13 @@ void beginServer(){
 
 
 void handleON() {
- 
-  digitalWrite(DOOR_PIN, HIGH);
-  digitalWrite(LED_BUILTIN,HIGH);
-  delay(3000);
-  digitalWrite(DOOR_PIN,LOW);
-  digitalWrite(LED_BUILTIN,LOW);
-  
-  
-  if (!handleFileRead("/index.htm")) {
-	server.send(404, "text/plain", "FileNotFound");
-  }
- 
+
+	digitalWrite(DOOR_PIN, HIGH);
+	digitalWrite(LED_BUILTIN,HIGH);
+	delay(3000);
+	digitalWrite(DOOR_PIN,LOW);
+	digitalWrite(LED_BUILTIN,LOW);
+	if (!handleFileRead("/index.htm")) server.send(404, "text/plain", "FileNotFound"); 
 }
 
 
