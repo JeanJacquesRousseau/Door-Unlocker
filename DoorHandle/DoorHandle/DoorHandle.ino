@@ -8,8 +8,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <ArduinoOTA.h>
-#include <WebSocketServer.h>
+#include <ESP8266HTTPUpdateServer.h>
 #include <FS.h>
 
 char* ssid     = "Marcus SacAPus";
@@ -19,15 +18,12 @@ char* password = "chenapan";
 #define LED_BUILTIN 1
 //Server and FileSystem object
 ESP8266WebServer server(302);
+ESP8266WebServer httpServer(301);
+ESP8266HTTPUpdateServer httpUpdater;
 File fsUploadFile;
-
-bool ota_flag=true;
-uint16_t time_elapsed =0;
 
 //Liste des fonctions
 void connectWiFi();
-//void OTAsetup();
-//void OTAroutine();
 void beginServer();
 void handleSubmit();
 String formatBytes(size_t bytes);
@@ -47,7 +43,7 @@ void setup() {
   delay(2000);
   digitalWrite(DOOR_PIN,LOW);
   Serial.begin(115200);
-    SPIFFS.begin();
+  SPIFFS.begin();
     {
 	    Dir dir = SPIFFS.openDir("/");
 	    while (dir.next()) {
@@ -63,12 +59,6 @@ void setup() {
   digitalWrite(DOOR_PIN, HIGH);
   delay(2000);
   digitalWrite(DOOR_PIN,LOW);
-
-  //ArduinoOTA.setHostname("MonESP32");                              // Nom du port a se connecter pour upload OTA
- // ArduinoOTA.setPasswordHash("81dc9bdb52d04dc20036dbd8313ed055");  // Password can be set with it's md5 value as well
- // ArduinoOTA.setPassword((const char*)"123");                 // Methode directe pour setup password OTA
-  //OTAsetup();                                                     //fonction pour setup OTA 
-
   beginServer();
   
 }
@@ -77,23 +67,28 @@ void setup() {
 
 void loop() {
 
- // OTAroutine();
+
   server.handleClient();  
+  httpServer.handleClient();
 
 }
 
 void connectWiFi(){
-   
+  WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, password);
   
   while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
+	
+  httpUpdater.setup(&httpServer);
+  httpServer.begin();
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  
 }
 
 void handleLogin() {                         // If a POST request is made to URI /login
@@ -111,109 +106,52 @@ void handleLogin() {                         // If a POST request is made to URI
 	}
 }
 
-/*
-void OTAsetup(){
 
-ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
-
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
-
-  ArduinoOTA.begin();
-
-
-
-}
-
-void OTAroutine(){
-
-  if(ota_flag){
-    
-  while(time_elapsed <TEMPS_UPLOAD_OTA)
-  {
-    ArduinoOTA.handle();
-    time_elapsed=millis();
-    delay(10);
-   }
-  ota_flag=false;  
- }
-
-
-}
-*/
 void beginServer(){
-  server.on("/login", HTTP_POST, handleLogin);
-
-  server.on("/ON", handleON);
-  
-
-  	   
-  //server.on("/OFF", handleOFF);
-  //server.on("/Tetris.htm",handleTetris);
-  
-     server.on("/edit", HTTP_PUT, handleFileCreate);
-     //delete file
-     server.on("/edit", HTTP_DELETE, handleFileDelete);
-     //first callback is called after the request has ended with all parsed arguments
-     //second callback handles file uploads at that location
-     server.on("/edit", HTTP_POST, []() {
-	     server.send(200, "text/plain", "");
+	server.on("/login", HTTP_POST, handleLogin);
+	server.on("/ON", handleON);
+    server.on("/edit", HTTP_PUT, handleFileCreate);
+    //delete file
+    server.on("/edit", HTTP_DELETE, handleFileDelete);
+    //first callback is called after the request has ended with all parsed arguments
+    //second callback handles file uploads at that location
+    server.on("/edit", HTTP_POST, []() {
+		server.send(200, "text/plain", "");
      }, handleFileUpload);
    	
 	
-	   server.on("/", HTTP_GET, []() {
-	    if (!handleFileRead("/index.htm")) {
-	     server.send(404, "text/plain", "FileNotFound");
+	server.on("/", HTTP_GET, []() {
+		if (!handleFileRead("/index.htm")) {
+			server.send(404, "text/plain", "FileNotFound");
 	    }
 	   });
   
   
   
-       server.on("/Controleur", HTTP_GET, []() {
-			if (!handleFileRead("/Controleur.htm")) {
-			      server.send(404, "text/plain", "FileNotFound");
+	server.on("/Controleur", HTTP_GET, []() {
+		if (!handleFileRead("/Controleur.htm")) {
+			server.send(404, "text/plain", "FileNotFound");
 			}
-       });
+		});
 	   
-	   server.on("/SourceDC", HTTP_GET, []() {
-		    if (!handleFileRead("/SourceDC.htm")) {
-				 server.send(404, "text/plain", "FileNotFound");
+	server.on("/SourceDC", HTTP_GET, []() {
+		if (!handleFileRead("/SourceDC.htm")) {
+			server.send(404, "text/plain", "FileNotFound");
 		    }
-	       });
+		});
 		   
-		server.on("/ServeurHTTP", HTTP_GET, []() {
-		 if (!handleFileRead("/ServeurHTTP.htm")) {
-		  server.send(404, "text/plain", "FileNotFound");
-		 }
+	server.on("/ServeurHTTP", HTTP_GET, []() {
+		if (!handleFileRead("/ServeurHTTP.htm")) {
+			server.send(404, "text/plain", "FileNotFound");
+			}
 		});
   
   
-     server.on("/Tetris", HTTP_GET, []() {
-	     if (!handleFileRead("/Tetris.htm")) {
-		     server.send(404, "text/plain", "FileNotFound");
-	     }
-     });
+	server.on("/Tetris", HTTP_GET, []() {
+		if (!handleFileRead("/Tetris.htm")) {
+			server.send(404, "text/plain", "FileNotFound");
+			}
+		});
   
    server.on("/list", HTTP_GET, handleFileList);
    //load editor

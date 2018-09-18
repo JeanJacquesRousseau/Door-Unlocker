@@ -127,9 +127,5 @@ C:\Users\Patricia\AppData\Local\Temp\VMBuilds\DoorHandle\esp8266_generic\Release
  C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266WiFi\src/WiFiClient.h \
  C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266WebServer\src/ESP8266WebServer.h \
  C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266WebServer\src/detail/RequestHandler.h \
- C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ArduinoOTA/ArduinoOTA.h \
- C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266WiFi\src/WiFiUdp.h \
- C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\cores\esp8266/Udp.h \
- C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266WiFi\src/include/slist.h \
- C:\Users\Patricia\Documents\Arduino\libraries\ESP8266-Websocket/WebSocketServer.h \
+ C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\libraries\ESP8266HTTPUpdateServer\src/ESP8266HTTPUpdateServer.h \
  C:\Users\Patricia\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.2\cores\esp8266/FS.h
